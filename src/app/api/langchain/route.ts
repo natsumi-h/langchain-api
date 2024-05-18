@@ -30,7 +30,6 @@ player: {input}
 elder:`;
 
 export async function POST(req: Request) {
-  console.log("api");
 
   try {
     // Extract the `messages` from the body of the request

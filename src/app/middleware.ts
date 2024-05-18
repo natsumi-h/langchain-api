@@ -13,6 +13,7 @@ const corsOptions = {
 
 export function middleware(request: NextRequest) {
   // Check the origin from the request
+  console.log("midleware");
   const origin = request.headers.get("origin") ?? "";
   const isAllowedOrigin = allowedOrigins.includes(origin);
 
