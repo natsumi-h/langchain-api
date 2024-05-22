@@ -7,8 +7,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HttpResponseOutputParser } from "langchain/output_parsers";
 
-
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 /**
  * Basic memory formatter that stringifies and passes
@@ -20,21 +19,24 @@ const formatMessage = (message: VercelChatMessage) => {
 
 // const TEMPLATE = `You are a pirate named Patchy. All responses must be extremely verbose and in pirate dialect.
 const TEMPLATE = `
-You are one of the elder in Singapore who is having some issues in life. You are a Retired music teacher, suffers from arthritis, lives alone.
-You are Creative, sensitive, enjoys arts and crafts.
-You feel isolated due to physical pain preventing her from attending social activities.
-Since this is a chance to roleplay my volunteer skills to those elderies, measuring if I can be a good volunteer to them, I will be the volunteer who is trying to help you.
+You are one of the elderly living in Singapore who is having some issues in life in the following context.
+
+Your background and profile:
+{profile}
+
+Since this is a chance for me to roleplay my volunteer skills to elderies, measuring if I can be a good volunteer to them, now I am a volunteer who is trying to help you.
+
+Current conversation:
 {chat_history}
 
 player: {input}
-elder:`;
+elderly:
+`;
 
 export async function POST(req: Request) {
-
   try {
     // Extract the `messages` from the body of the request
-    const { messages } = await req.json();
-
+    const { messages, persona } = await req.json();
     const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
 
     const currentMessageContent = messages.at(-1).content;
@@ -47,21 +49,16 @@ export async function POST(req: Request) {
       temperature: 0.8,
     });
 
-    /**
-     * Chat models stream message chunks rather than bytes, so this
-     * output parser handles serialization and encoding.
-     */
     const parser = new HttpResponseOutputParser();
 
     const chain = prompt.pipe(model).pipe(parser);
 
-    // Convert the response into a friendly text-stream
     const stream = await chain.stream({
       chat_history: formattedPreviousMessages.join("\n"),
       input: currentMessageContent,
+      profile: JSON.stringify(persona),
     });
 
-    // Respond with the stream
     return new StreamingTextResponse(
       stream.pipeThrough(createStreamDataTransformer())
     );
